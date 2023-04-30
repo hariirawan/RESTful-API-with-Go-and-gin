@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"bwastartup/auth"
 	"bwastartup/helper"
 	"bwastartup/user"
 	"fmt"
@@ -11,10 +12,11 @@ import (
 
 type userHandler struct {
 	userService user.Service
+	authService auth.Service
 }
 
-func NewUserHandler(userService user.Service) *userHandler {
-	return &userHandler{userService}
+func NewUserHandler(userService user.Service, authService auth.Service) *userHandler {
+	return &userHandler{userService, authService}
 }
 
 func (h *userHandler) RegisterUser(c *gin.Context) {
@@ -38,7 +40,14 @@ func (h *userHandler) RegisterUser(c *gin.Context) {
 		return
 	}
 
-	formatter := user.FormatUser(userInput, "tokentokentoeken")
+	token, err := h.authService.GenerateToken(userInput.ID)
+	if err != nil {
+		response := helper.APIResponse("JWT token failed", http.StatusBadRequest, "error", nil)
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	formatter := user.FormatUser(userInput, token)
 	response := helper.APIResponse("Account has been registered", http.StatusOK, "success", formatter)
 
 	c.JSON(http.StatusOK, response)
@@ -68,7 +77,14 @@ func (h *userHandler) Login(c *gin.Context) {
 		return
 	}
 
-	formatter := user.FormatUser(loggedinUser, "tokentokentoeken")
+	token, err := h.authService.GenerateToken(loggedinUser.ID)
+	if err != nil {
+		response := helper.APIResponse("Login failed", http.StatusBadRequest, "error", nil)
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	formatter := user.FormatUser(loggedinUser, token)
 	response := helper.APIResponse("Login Success!", http.StatusOK, "success", formatter)
 
 	c.JSON(http.StatusOK, response)
@@ -76,13 +92,6 @@ func (h *userHandler) Login(c *gin.Context) {
 }
 
 func (h *userHandler) CheckEmailAvailablility(c *gin.Context) {
-	//analisis flow
-	//ada input email dari user
-	//input email di mapping ke struct input
-	//struct input di-passing ke service
-	//service akan memanggil repository - email sudah ada atau belum
-	//repository - db
-
 	var input user.CheckEmailInput
 
 	err := c.ShouldBindJSON(&input)
