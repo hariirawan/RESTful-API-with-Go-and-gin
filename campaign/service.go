@@ -1,6 +1,7 @@
 package campaign
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/gosimple/slug"
@@ -10,6 +11,7 @@ type Service interface {
 	GetCampaigns(userID int) ([]Campaign, error)
 	GetCampaignByID(campaignID int) (Campaign, error)
 	CreateCampaign(input CreateCampaignInput) (Campaign, error)
+	UpdateCampaign(campaignID int, input CreateCampaignInput) (Campaign, error)
 }
 
 type service struct {
@@ -68,4 +70,29 @@ func (s *service) CreateCampaign(input CreateCampaignInput) (Campaign, error) {
 	}
 
 	return saveCampaign, err
+}
+
+func (s *service) UpdateCampaign(campaignID int, input CreateCampaignInput) (Campaign, error) {
+	campaign, err := s.repository.FindByID(campaignID)
+	if err != nil {
+		return campaign, err
+	}
+
+	if campaign.UserID != input.User.ID {
+		return campaign, errors.New("User ID does not match")
+	}
+
+	campaign.Name = input.Name
+	campaign.Description = input.Description
+	campaign.ShortDescription = input.ShortDescription
+	campaign.GoalAmount = input.GoalAmount
+	campaign.Perks = input.Perks
+
+	updateCampaign, err := s.repository.Update(campaign)
+
+	if err != nil {
+		return updateCampaign, err
+	}
+
+	return updateCampaign, nil
 }
