@@ -1,13 +1,12 @@
 package campaign
 
-type CampaingInput struct {
-	UserID           int    `json:"user_id"`
-	Name             string `json:"name"`
-	ShortDescription string `json:"short_description"`
-	Description      string `json:"description"`
-	Perks            string `json:"perks"`
-	BackerCount      int    `json:"backer_count"`
-	GoalAmount       int    `json:"goal_amount"`
-	CurrentAmount    int    `json:"current_amount"`
-	Slug             string `json:"slug"`
+import "bwastartup/user"
+
+type CreateCampaignInput struct {
+	Name             string `json:"name" binding:"required"`
+	ShortDescription string `json:"short_description" binding:"required"`
+	Description      string `json:"description" binding:"required"`
+	Perks            string `json:"perks" binding:"required"`
+	GoalAmount       int    `json:"goal_amount" binding:"required"`
+	User             user.User
 }
